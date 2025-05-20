@@ -7,7 +7,7 @@ from discord.ext import commands
 import nest_asyncio
 from responses import get_faceit_stats
 import asyncio
-
+import random
 
 
 # Zastosowanie poprawki dla kompatybilności asyncio w środowiskach takich jak Jupyter
@@ -27,7 +27,39 @@ intents.presences = True
 # Inicjalizacja bota z intentami i prefiksem komendy
 bot = commands.Bot(command_prefix='!', intents=intents)
 
+@bot.command()
+async def ping(ctx, member: discord.Member):
+    guild = ctx.guild
 
+    if not member.voice or not member.voice.channel:
+        await ctx.send(f"ℹ️ {member.display_name} nie jest aktualnie na kanale głosowym.")
+        return
+
+    original_channel = member.voice.channel
+
+    # Lista wszystkich kanałów głosowych oprócz obecnego
+    voice_channels = [c for c in guild.voice_channels if c != original_channel]
+
+    if len(voice_channels) < 2:
+        await ctx.send("⚠️ Potrzebne są przynajmniej 3 kanały głosowe, żeby to działało.")
+        return
+
+    # Losowe dwa kanały
+    channels = random.sample(voice_channels, 2)
+
+    await ctx.send(f"🎯 Przerzucanie {member.mention}...")
+
+    try:
+        for i in range(5):
+            await member.move_to(channels[i % 2])
+            await asyncio.sleep(1)
+
+        await member.move_to(original_channel)
+        await ctx.send(f"✅ {member.display_name} wrócił(a) na swój kanał.")
+    except discord.Forbidden:
+        await ctx.send("❌ Nie mam uprawnień do przenoszenia tego użytkownika.")
+    except Exception as e:
+        await ctx.send(f"⚠️ Wystąpił błąd: {e}")
 
 # Komenda: Wyświetlenie regulaminu
 @bot.command()
