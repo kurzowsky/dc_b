@@ -29,6 +29,7 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 @bot.command()
 @commands.cooldown(rate=1, per=60, type=commands.BucketType.user)
+@commands.has_role("ping")  # <-- wymaganie roli "ping"
 async def ping(ctx, member: discord.Member):
     guild = ctx.guild
 
@@ -38,14 +39,12 @@ async def ping(ctx, member: discord.Member):
 
     original_channel = member.voice.channel
 
-    # Lista wszystkich kanałów głosowych oprócz obecnego
     voice_channels = [c for c in guild.voice_channels if c != original_channel]
 
     if len(voice_channels) < 2:
         await ctx.send("Potrzebne są przynajmniej 3 kanały głosowe, żeby to działało.")
         return
 
-    # Losowe dwa kanały
     channels = random.sample(voice_channels, 2)
 
     await ctx.send(f"Przerzucanie {member.mention}...")
@@ -66,6 +65,9 @@ async def ping(ctx, member: discord.Member):
 async def ping_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         await ctx.send(f"Poczekaj {int(error.retry_after)} sekundy przed ponownym użyciem tej komendy.")
+    elif isinstance(error, commands.MissingRole):
+        await ctx.send("Brak uprawnień. Potrzebujesz roli `ping`, aby użyć tej komendy.")
+
 
 # Komenda: Wyświetlenie regulaminu
 @bot.command()
